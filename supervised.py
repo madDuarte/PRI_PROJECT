@@ -9,7 +9,8 @@ from sklearn.decomposition import PCA
 from sklearn.model_selection import RandomizedSearchCV
 
 vectorizer = TfidfVectorizer()
-pca_model = PCA(n_components=20)
+pca_model = PCA(n_components=15)
+accuracies = []
 lock = threading.Lock()
 
 
@@ -117,7 +118,7 @@ def worker(q):
     print(result)
     print()
     lock.release()
-
+    accuracies.append(result)
 
 D_PATH = 'rcv1/'
 q_topics_dict = read_topics_file()  # dictionary with topic id: topic(title, desc, narrative) ,for each topic
@@ -133,6 +134,16 @@ for q in list(q_rels_test_dict.keys())[:10]:
 
 for x in thread_list:
     x.join()
+
+sumAccuracy = 0
+sumError = 0
+for i in accuracies:
+    sumAccuracy += list(i)[0][0]
+    sumError += list(i)[1][0]
+print("Accuracy =>")
+print(sumAccuracy/10)
+print("Error =>")
+print(sumError/10)
 '''
 print(classification_model)
 for test_file in test_xmls.keys():
