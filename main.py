@@ -95,7 +95,7 @@ def read_xml_files(D_PATH):
     #for folder in folders:
     xml_file_names = os.listdir(D_PATH)
     for xml_file_name in xml_file_names:
-        print(xml_file_name)
+        #print(xml_file_name)
         if os.path.isfile(os.path.join(D_PATH, xml_file_name)) and xml_file_name.find(
                 ".xml") != -1:
             xml_file = ET.parse(D_PATH + xml_file_name)

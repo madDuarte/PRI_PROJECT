@@ -4,12 +4,12 @@ from main import read_xml_files, red_qrels_file, read_topics_file
 from sklearn.naive_bayes import GaussianNB
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.ensemble import RandomForestClassifier
-from sklearn import metrics
+from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 from sklearn.decomposition import PCA
 from sklearn.model_selection import RandomizedSearchCV
 
 vectorizer = TfidfVectorizer()
-pca_model = PCA(n_components=15)
+pca_model = PCA(n_components=20)
 accuracies = []
 lock = threading.Lock()
 
@@ -87,7 +87,7 @@ def rank_docs(D,q,M,p):
 def evaluate(Qtest, Dtest, Rtest, M, q, args=None):
 
     # evaluate with relevance feedback
-    labels_pred, labels_test, accuracies, error_rate = [], [], [], []
+    labels_pred, labels_test = [], []
     for doc in Dtest.keys():
         label = classify(Dtest[doc], q, M)[0]
         labels_pred.append(label)
@@ -95,14 +95,15 @@ def evaluate(Qtest, Dtest, Rtest, M, q, args=None):
             labels_test.append(1)
         else:
             labels_test.append(0)
-    accuracy = metrics.accuracy_score(labels_test, labels_pred)
-    accuracies.append(accuracy)
-    error_rate.append(1 - accuracy)
+    accuracy = accuracy_score(labels_test, labels_pred)
+    precision = precision_score(labels_test, labels_pred)
+    recall = recall_score(labels_test, labels_pred)
+    f1 = f1_score(labels_test, labels_pred)
 
-    return accuracies, error_rate # accuracy and error rate for all topics
+    return accuracy, 1-accuracy, precision, recall, f1 # accuracy and error rate for all topics
 
 def worker(q):
-    classification_model = training(q, train_xmls, q_rels_train_dict, 'RandomForest')
+    classification_model = training(q, train_xmls, q_rels_train_dict, 'NaiveBayes')
     # print(classification_model.best_params_)
 
     # print(rank_docs(test_xmls,q,classification_model,10))
@@ -137,13 +138,27 @@ for x in thread_list:
 
 sumAccuracy = 0
 sumError = 0
+sumPrecision = 0
+sumRecall = 0
+sumF1 = 0
 for i in accuracies:
-    sumAccuracy += list(i)[0][0]
-    sumError += list(i)[1][0]
+    sumAccuracy += list(i)[0]
+    sumError += list(i)[1]
+    sumPrecision += list(i)[2]
+    sumRecall += list(i)[3]
+    sumF1 += list(i)[4]
+
 print("Accuracy =>")
 print(sumAccuracy/10)
 print("Error =>")
 print(sumError/10)
+print("Precision =>")
+print(sumPrecision/10)
+print("Recall =>")
+print(sumRecall/10)
+print("F1 =>")
+print(sumF1/10)
+
 '''
 print(classification_model)
 for test_file in test_xmls.keys():
