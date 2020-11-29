@@ -1,7 +1,7 @@
 import threading
 
-from pandas import np
 
+import numpy as np
 from main import read_xml_files, red_qrels_file, read_topics_file
 from sklearn.naive_bayes import GaussianNB
 from sklearn.feature_extraction.text import TfidfVectorizer
