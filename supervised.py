@@ -1,5 +1,7 @@
 import threading
 
+from pandas import np
+
 from main import read_xml_files, red_qrels_file, read_topics_file
 from sklearn.naive_bayes import GaussianNB
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -9,7 +11,7 @@ from sklearn.decomposition import PCA
 from sklearn.model_selection import RandomizedSearchCV
 
 vectorizer = TfidfVectorizer()
-pca_model = PCA(n_components=20)
+#pca_model = PCA(n_components=20) # Uncomment for PCA (1/3)
 accuracies = []
 lock = threading.Lock()
 
@@ -28,38 +30,37 @@ def training(q, Dtrain, Rtrain, args='NaiveBayes'):
             doc_relevance.append(0)
 
     X = vectorizer.fit_transform(collection).toarray()
-    X = pca_model.fit_transform(X)
-    #X = pca.transform(X)
-    #print(X)
+    #X = pca_model.fit_transform(X) # Uncomment for PCA (2/3)
+
     if args == 'NaiveBayes':
         gnb = GaussianNB()
         return gnb.fit(X, doc_relevance)
 
     elif args == 'RandomForest':
         clf = RandomForestClassifier() # entropy also ; numer of tree default is 100, change parameters for the report
-        # # Number of trees in random forest
-        # n_estimators = [int(x) for x in np.linspace(start = 200, stop = 2000, num = 10)]
-        # # Number of features to consider at every split
-        # max_features = ['auto', 'sqrt']
-        # # Maximum number of levels in tree
-        # max_depth = [int(x) for x in np.linspace(10, 110, num = 11)]
-        # max_depth.append(None)
-        # # Minimum number of samples required to split a node
-        # min_samples_split = [2, 5, 10]
-        # # Minimum number of samples required at each leaf node
-        # min_samples_leaf = [1, 2, 4]
-        # # Method of selecting samples for training each tree
-        # bootstrap = [True, False]
-        # # Create the random grid
-        # random_grid = {'n_estimators': n_estimators,
-        #        'max_features': max_features,
-        #        'max_depth': max_depth,
-        #        'min_samples_split': min_samples_split,
-        #        'min_samples_leaf': min_samples_leaf,
-        #        'bootstrap': bootstrap}
-        # random = RandomizedSearchCV(estimator = clf, param_distributions = random_grid, n_iter = 100, cv = 3, verbose=2, random_state=42, n_jobs = -1)
-        # return random.fit(X, doc_relevance)
-        return clf.fit(X, doc_relevance)
+        # Number of trees in random forest
+        n_estimators = [int(x) for x in np.linspace(start = 200, stop = 2000, num = 10)]
+        # Number of features to consider at every split
+        max_features = ['auto', 'sqrt']
+        # Maximum number of levels in tree
+        max_depth = [int(x) for x in np.linspace(10, 110, num = 11)]
+        max_depth.append(None)
+        # Minimum number of samples required to split a node
+        min_samples_split = [2, 5, 10]
+        # Minimum number of samples required at each leaf node
+        min_samples_leaf = [1, 2, 4]
+        # Method of selecting samples for training each tree
+        bootstrap = [True, False]
+        # Create the random grid
+        random_grid = {'n_estimators': n_estimators,
+               'max_features': max_features,
+               'max_depth': max_depth,
+               'min_samples_split': min_samples_split,
+               'min_samples_leaf': min_samples_leaf,
+               'bootstrap': bootstrap}
+        random = RandomizedSearchCV(estimator = clf, param_distributions = random_grid, n_iter = 100, cv = 3, verbose=2, random_state=42, n_jobs = -1)
+        return random.fit(X, doc_relevance)
+        # return clf.fit(X, doc_relevance)
 
 
 def classify(d, q, M, args=None):
@@ -67,8 +68,7 @@ def classify(d, q, M, args=None):
     for word in d:
         s += word + " "
     x_test = vectorizer.transform([s]).toarray()
-   # pca = pca_model.fit(x_test)
-    x_test = pca_model.transform(x_test)
+    #x_test = pca_model.transform(x_test) # Uncomment for PCA (3/3)
     if args == 'prob':
         return M.predict_proba(x_test) # probabilistic output
     else:
